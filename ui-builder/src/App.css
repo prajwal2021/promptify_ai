@@ -64,18 +64,54 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.responseContainer {
+.responses-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
   margin-top: 20px;
+}
+
+.responseContainer {
   padding: 15px;
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
-.responseContainer h2 {
+.response-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.response-header h2 {
   font-size: 16px;
   color: #333;
-  margin-top: 0;
+  margin: 0;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.copy-button:hover {
+  background-color: #f0f0f0;
+}
+
+.copy-icon {
+  color: #666;
 }
 
 .responseContainer p {

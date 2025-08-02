@@ -4,7 +4,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.log("✅ Background script received text:", request.selectedText);
   
       // Call our backend API
-      fetch('http://127.0.0.1:8000/api/generate', {
+      fetch('https://promptify-mrc0dl17o-prajwals-projects-3a25af74.vercel.app/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,12 +25,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return response.json();
       })
       .then(data => {
+        // The backend now sends { results: ["prompt1", "prompt2"] }
         console.log("🤖 AI Response:", data);
-        chrome.storage.local.set({ lastResponse: data });
+        chrome.storage.local.set({ lastResponse: { results: data.results } });
       })
       .catch(error => {
         console.error('❌ Error calling backend:', error.message);
-        chrome.storage.local.set({ lastResponse: { error: error.message } });
+        chrome.storage.local.set({ lastResponse: { error: error.message, results: [] } });
       });
     }
   });

@@ -4,7 +4,7 @@
     "version": "1.0",
     "description": "Uses AI to improve your writing anywhere on the web.",
     "permissions": [ "storage" ],
-    "host_permissions": [ "http://localhost:8000/*" ],
+    "host_permissions": [ "https://promptify-mrc0dl17o-prajwals-projects-3a25af74.vercel.app/*" ],
     "background": { "service_worker": "background.js" },
     "content_scripts": [
       {

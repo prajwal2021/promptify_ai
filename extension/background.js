@@ -10,8 +10,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userText: request.selectedText,
-          action: "improve" // Hardcoding the action for now
+          userText: request.selectedText
         })
       })
       .then(response => {

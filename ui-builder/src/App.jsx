@@ -3,7 +3,7 @@ import './App.css';
 
 function App() {
   const [inputText, setInputText] = useState('');
-  const [response, setResponse] = useState([]); // Changed to array
+  const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -11,9 +11,9 @@ function App() {
       if (area === 'local' && changes.lastResponse?.newValue) {
         const { result, error } = changes.lastResponse.newValue;
         if (error) {
-          setResponse([`Error: ${error}`]);
+          setResponse(`Error: ${error}`);
         } else {
-          setResponse(result || ['No response text received.']);
+          setResponse(result || 'No response text received.');
         }
         setIsLoading(false);
       }
@@ -26,7 +26,7 @@ function App() {
       if (data.lastResponse) {
         const { result, error } = data.lastResponse;
         if (error) {
-          setResponse([`Error: ${error}`]);
+          setResponse(`Error: ${error}`);
         } else if (result) {
           setResponse(result);
         }
@@ -71,7 +71,7 @@ function App() {
         </div>
       </div>
       <h1>Promptify AI</h1>
-      <p>Enter your prompt idea and copy the generated ideal prompt.</p>
+      <p>Turn your ideas into prompts.</p>
       <form onSubmit={handleSubmit}>
         <textarea
           value={inputText}
@@ -84,12 +84,10 @@ function App() {
           {isLoading ? 'Thinking...' : 'Generate Prompt'}
         </button>
       </form>
-      {response.length > 0 && (
+      {response && (
         <div className="responseContainer">
           <h2>Generated Prompts:</h2>
-          {response.map((prompt, index) => (
-            <p key={index} className="responseText">{prompt}</p>
-          ))}
+          <p className="responseText">{response}</p>
         </div>
       )}
     </div>

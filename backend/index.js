@@ -30,17 +30,34 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 app.post('/api/generate', async (req, res) => {
   console.log('➡️ Received request for /api/generate');
   try {
-    const { userText, action } = req.body;
+    const { userText } = req.body;
     console.log(`   - User Text: ${userText}`);
-    console.log(`   - Action: ${action}`);
 
-    if (!userText || !action) {
-      console.log('   - ❌ Error: Missing userText or action.');
-      return res.status(400).json({ error: 'userText and action are required.' });
+    if (!userText) {
+      console.log('   - ❌ Error: Missing userText.');
+      return res.status(400).json({ error: 'userText is required.' });
     }
 
-    const prompt = `As an expert writer, ${action} the following text: "${userText}"`;
-    console.log('   - 📝 Generated Prompt:', prompt);
+    const prompt = `
+You are a world-class prompt engineer acting as a 'Prompt Enhancer'. Your task is to take a user's potentially vague idea and generate two distinct, high-quality prompts.
+
+Your internal thought process should be:
+
+Analyze the user's input to understand their core intent.
+
+Flesh out the idea with relevant details, considering context, style, and potential use cases (e.g., for image generation, for a chatbot, for a story).
+
+Based on this enhanced understanding, construct two separate, detailed prompts.
+
+The user's input is:
+
+${userText}
+
+Your final output MUST ONLY be a valid JSON array containing exactly two strings, representing the two generated prompts. Do not include your internal thought process or any other commentary in the final output.
+
+Example Final Output: ["First generated prompt...", "Second generated prompt..."]
+`;
+    console.log('   - 📝 Generated Prompt for Gemini.');
 
     console.log('   - 🚀 Sending request to Gemini API...');
     const response = await axios.post(GEMINI_API_URL, {
@@ -49,10 +66,27 @@ app.post('/api/generate', async (req, res) => {
     console.log('   - ✅ Received response from Gemini API.');
 
     const generatedText = response.data.candidates[0].content.parts[0].text;
-    console.log('   - 🤖 Extracted Text:', generatedText);
+    console.log('   - 🤖 Raw AI Response:', generatedText);
+
+    // Attempt to parse the string into a JSON array
+    let promptsArray;
+    try {
+      // Clean the response to ensure it's valid JSON
+      const cleanedText = generatedText.trim().replace(/^```json\s*|```\s*$/g, '');
+      promptsArray = JSON.parse(cleanedText);
+      if (!Array.isArray(promptsArray) || promptsArray.length !== 2 || !promptsArray.every(item => typeof item === 'string')) {
+        throw new Error('Invalid JSON format: Not an array of two strings.');
+      }
+    } catch (parseError) {
+      console.error('   - ❌ Error parsing AI response:', parseError.message);
+      // Fallback: if parsing fails, return the raw text wrapped in an array with a placeholder
+      promptsArray = [generatedText, "Failed to generate a second prompt."];
+    }
+    
+    console.log('   - ✨ Parsed Prompts:', promptsArray);
 
     console.log('   - ⬅️ Sending success response back to extension.');
-    res.status(200).json({ result: generatedText });
+    res.status(200).json({ result: promptsArray });
 
   } catch (error) {
     console.error('   - ❌❌❌ FATAL ERROR calling Gemini API:');

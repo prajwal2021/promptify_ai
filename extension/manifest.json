@@ -1,10 +1,10 @@
 {
     "manifest_version": 3,
-    "name": "AI Writing Assistant",
+    "name": "Promptify AI",
     "version": "1.0",
-    "description": "Uses AI to improve your writing anywhere on the web.",
+    "description": "Generate prompts for your AI models.",
     "permissions": [ "storage" ],
-    "host_permissions": [ "https://promptify-mrc0dl17o-prajwals-projects-3a25af74.vercel.app/*" ],
+    "host_permissions": [ "https://promptify-k6ojife0c-prajwals-projects-3a25af74.vercel.app/*" ],
     "background": { "service_worker": "background.js" },
     "content_scripts": [
       {

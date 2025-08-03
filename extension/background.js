@@ -4,7 +4,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.log("✅ Background script received text:", request.selectedText);
   
       // Call our backend API
-      fetch('https://promptify-mrc0dl17o-prajwals-projects-3a25af74.vercel.app/api/generate', {
+      fetch('https://promptify-k6ojife0c-prajwals-projects-3a25af74.vercel.app/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

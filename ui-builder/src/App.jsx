@@ -54,8 +54,8 @@ function App() {
 
   return (
     <div className="container">
-      <h1>AI Writing Assistant</h1>
-      <p>Enter your text below and choose an action.</p>
+      <h1>Promptify AI</h1>
+      <p>Enter your prompt idea and copy the generated ideal prompt.</p>
 
       <form onSubmit={handleSubmit}>
         <textarea
@@ -66,7 +66,7 @@ function App() {
           disabled={isLoading}
         />
         <button type="submit" disabled={isLoading}>
-          {isLoading ? 'Thinking...' : 'Improve Text'}
+          {isLoading ? 'Thinking...' : 'Generate Prompt'}
         </button>
       </form>
 

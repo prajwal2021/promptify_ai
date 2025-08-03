@@ -30,51 +30,29 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 app.post('/api/generate', async (req, res) => {
   console.log('➡️ Received request for /api/generate');
   try {
-    const { userText } = req.body;
+    const { userText, action } = req.body;
     console.log(`   - User Text: ${userText}`);
+    console.log(`   - Action: ${action}`);
 
-    if (!userText) {
-      console.log('   - ❌ Error: Missing userText.');
-      return res.status(400).json({ error: 'userText is required.' });
+    if (!userText || !action) {
+      console.log('   - ❌ Error: Missing userText or action.');
+      return res.status(400).json({ error: 'userText and action are required.' });
     }
 
-    const systemPrompt = `You are a world-class prompt engineer. Your task is to take the user's raw input and transform it into two distinct, clear, and effective prompts that another AI could execute flawlessly. The user's input is:
+    const prompt = `As an expert writer, ${action} the following text: "${userText}"`;
+    console.log('   - 📝 Generated Prompt:', prompt);
 
----
-${userText}
----
-
-Your response MUST be a valid JSON array containing exactly two strings, with no other text, commentary, or formatting.
-
-Example Response Format:
-["First generated prompt...", "Second generated prompt..."]`;
-
-    console.log('   - 📝 Generated System Prompt for Gemini.');
     console.log('   - 🚀 Sending request to Gemini API...');
     const response = await axios.post(GEMINI_API_URL, {
-      contents: [{ parts: [{ text: systemPrompt }] }],
+      contents: [{ parts: [{ text: prompt }] }],
     });
     console.log('   - ✅ Received response from Gemini API.');
 
-    // Extract the text, which should be a JSON string
-    const rawResponse = response.data.candidates[0].content.parts[0].text;
-    console.log('   - 🤖 Raw AI Response:', rawResponse);
-
-    // More robustly find the JSON array within the raw response string
-    const jsonMatch = rawResponse.match(/\[.*\]/s);
-    if (!jsonMatch) {
-      throw new Error("Could not find a valid JSON array in the AI's response.");
-    }
-    
-    const jsonString = jsonMatch[0];
-    console.log('   - 🎯 Extracted JSON String:', jsonString);
-
-    // Parse the JSON string into an array
-    const generatedPrompts = JSON.parse(jsonString);
-    console.log('   - ✨ Parsed Prompts:', generatedPrompts);
+    const generatedText = response.data.candidates[0].content.parts[0].text;
+    console.log('   - 🤖 Extracted Text:', generatedText);
 
     console.log('   - ⬅️ Sending success response back to extension.');
-    res.status(200).json({ results: generatedPrompts });
+    res.status(200).json({ result: generatedText });
 
   } catch (error) {
     console.error('   - ❌❌❌ FATAL ERROR calling Gemini API:');
@@ -95,12 +73,7 @@ Example Response Format:
   }
 });
 
-// Start the server for local development
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  });
-}
-
-// Export the app for Vercel
-module.exports = app;
+// Start the server
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+});

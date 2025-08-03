@@ -1,8 +1,0 @@
-{
-  "name": "promptify-ai-monorepo",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "build": "cd ui-builder && npm run build && cd .. && cp ui-builder/dist/assets/index-*.js extension/main.js && cp ui-builder/dist/assets/index-*.css extension/main.css"
-  }
-}

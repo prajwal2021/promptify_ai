@@ -24,7 +24,6 @@ app.get('/', (req, res) => {
 
 // AI Generation Route
 const axios = require('axios');
-// Replace it with this NEW line:
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
 app.post('/api/generate', async (req, res) => {
@@ -42,15 +41,11 @@ app.post('/api/generate', async (req, res) => {
     const prompt = `You are a world-class prompt engineer acting as a 'Prompt Enhancer'. Your task is to take a user's potentially vague idea and generate two distinct, high-quality prompts.
 
 Your internal thought process should be:
-
 Analyze the user's input to understand their core intent.
-
 Flesh out the idea with relevant details, considering context, style, and potential use cases (e.g., for image generation, for a chatbot, for a story).
-
 Based on this enhanced understanding, construct two separate, detailed prompts.
 
 The user's input is:
-
 ${userText}
 
 Your final output MUST ONLY be a valid JSON array containing exactly two strings, representing the two generated prompts. Do not include your internal thought process or any other commentary in the final output.
@@ -83,7 +78,8 @@ Example Final Output: ["First generated prompt...", "Second generated prompt..."
     }
 
     console.log('   - ⬅️ Sending success response back to extension.');
-    res.status(200).json({ result: promptsArray });
+    // MODIFIED LINE: Send the array directly without the 'result' key
+    res.status(200).json(promptsArray);
 
   } catch (error) {
     console.error('   - ❌❌❌ FATAL ERROR calling Gemini API:');

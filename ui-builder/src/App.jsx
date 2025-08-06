@@ -3,7 +3,7 @@ import './App.css';
 
 function App() {
   const [inputText, setInputText] = useState('');
-  const [response, setResponse] = useState('');
+  const [response, setResponse] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -11,9 +11,9 @@ function App() {
       if (area === 'local' && changes.lastResponse?.newValue) {
         const { result, error } = changes.lastResponse.newValue;
         if (error) {
-          setResponse(`Error: ${error}`);
+          setResponse([`Error: ${error}`]);
         } else {
-          setResponse(result || 'No response text received.');
+          setResponse(result || []);
         }
         setIsLoading(false);
       }
@@ -26,7 +26,7 @@ function App() {
       if (data.lastResponse) {
         const { result, error } = data.lastResponse;
         if (error) {
-          setResponse(`Error: ${error}`);
+          setResponse([`Error: ${error}`]);
         } else if (result) {
           setResponse(result);
         }
@@ -43,7 +43,7 @@ function App() {
     if (!inputText || isLoading) return;
 
     setIsLoading(true);
-    setResponse('');
+    setResponse([]);
     chrome.storage.local.remove('lastResponse'); // Clear previous response
 
     chrome.runtime.sendMessage({
@@ -84,10 +84,12 @@ function App() {
           {isLoading ? 'Thinking...' : 'Generate Prompt'}
         </button>
       </form>
-      {response && (
+      {response.length > 0 && (
         <div className="responseContainer">
           <h2>Generated Prompts:</h2>
-          <p className="responseText">{response}</p>
+          {response.map((prompt, index) => (
+            <p key={index} className="responseText">{prompt}</p>
+          ))}
         </div>
       )}
     </div>

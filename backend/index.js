@@ -39,7 +39,25 @@ app.post('/api/generate', async (req, res) => {
       return res.status(400).json({ error: 'userText and action are required.' });
     }
 
-    const prompt = `As an expert writer, ${action} the following text: "${userText}"`;
+    const promptTemplate = `You are a world-class prompt engineer acting as a 'Prompt Enhancer'. Your task is to take a user's potentially vague idea and generate two distinct, high-quality prompts.
+
+Your internal thought process should be:
+
+Analyze the user's input to understand their core intent.
+
+Flesh out the idea with relevant details, considering context, style, and potential use cases (e.g., for image generation, for a chatbot, for a story).
+
+Based on this enhanced understanding, construct two separate, detailed prompts.
+
+The user's input is:
+
+{{USER_INPUT_HERE}}
+
+Your final output MUST ONLY be a valid JSON array containing exactly two strings, representing the two generated prompts. Do not include your internal thought process or any other commentary in the final output.
+
+Example Final Output: ["First generated prompt...", "Second generated prompt..."]`;
+
+    const prompt = promptTemplate.replace('{{USER_INPUT_HERE}}', userText);
     console.log('   - 📝 Generated Prompt:', prompt);
 
     console.log('   - 🚀 Sending request to Gemini API...');
@@ -50,9 +68,24 @@ app.post('/api/generate', async (req, res) => {
 
     const generatedText = response.data.candidates[0].content.parts[0].text;
     console.log('   - 🤖 Extracted Text:', generatedText);
+    
+    // Attempt to parse the string response into a JSON array
+    let promptsArray;
+    try {
+      // Clean the response to ensure it's valid JSON
+      const cleanedText = generatedText.trim().replace(/^```json\s*|```\s*$/g, '');
+      promptsArray = JSON.parse(cleanedText);
+      if (!Array.isArray(promptsArray) || promptsArray.length !== 2 || !promptsArray.every(item => typeof item === 'string')) {
+        throw new Error('Invalid format: Expected a JSON array of two strings.');
+      }
+    } catch (parseError) {
+      console.error('   - ❌ Error parsing AI response:', parseError.message);
+      // Fallback: return the raw text if parsing fails
+      promptsArray = [generatedText, "Could not generate a second prompt due to a formatting issue."];
+    }
 
     console.log('   - ⬅️ Sending success response back to extension.');
-    res.status(200).json({ result: generatedText });
+    res.status(200).json({ result: promptsArray });
 
   } catch (error) {
     console.error('   - ❌❌❌ FATAL ERROR calling Gemini API:');

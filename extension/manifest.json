@@ -4,7 +4,7 @@
     "version": "1.0",
     "description": "Generate prompts for your AI models.",
     "permissions": [ "storage" ],
-    "host_permissions": [ "https://promptify-k6ojife0c-prajwals-projects-3a25af74.vercel.app/*" ],
+    "host_permissions": [ "https://promptify-ai10-prajwals-projects-3a25af74.vercel.app/*" ],
     "background": { "service_worker": "background.js" },
     "content_scripts": [
       {

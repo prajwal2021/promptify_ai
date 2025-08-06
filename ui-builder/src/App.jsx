@@ -13,7 +13,7 @@ function App() {
         if (error) {
           setResponse([`Error: ${error}`]);
         } else {
-          setResponse(result || []);
+          setResponse(Array.isArray(result) ? result : (result ? [result] : []));
         }
         setIsLoading(false);
       }
@@ -28,7 +28,7 @@ function App() {
         if (error) {
           setResponse([`Error: ${error}`]);
         } else if (result) {
-          setResponse(result);
+          setResponse(Array.isArray(result) ? result : [result]);
         }
       }
     });

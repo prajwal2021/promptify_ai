@@ -39,7 +39,7 @@ app.post('/api/generate', async (req, res) => {
       return res.status(400).json({ error: 'userText and action are required.' });
     }
 
-    const promptTemplate = `You are a world-class prompt engineer acting as a 'Prompt Enhancer'. Your task is to take a user's potentially vague idea and generate two distinct, high-quality prompts.
+    const prompt = `You are a world-class prompt engineer acting as a 'Prompt Enhancer'. Your task is to take a user's potentially vague idea and generate two distinct, high-quality prompts.
 
 Your internal thought process should be:
 
@@ -51,13 +51,11 @@ Based on this enhanced understanding, construct two separate, detailed prompts.
 
 The user's input is:
 
-{{USER_INPUT_HERE}}
+${userText}
 
 Your final output MUST ONLY be a valid JSON array containing exactly two strings, representing the two generated prompts. Do not include your internal thought process or any other commentary in the final output.
 
 Example Final Output: ["First generated prompt...", "Second generated prompt..."]`;
-
-    const prompt = promptTemplate.replace('{{USER_INPUT_HERE}}', userText);
     console.log('   - 📝 Generated Prompt:', prompt);
 
     console.log('   - 🚀 Sending request to Gemini API...');

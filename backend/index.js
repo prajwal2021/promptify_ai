@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const axios = require('axios');
 
 // Initialize Express app
 const app = express();
@@ -22,10 +23,36 @@ app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Backend is running.' });
 });
 
-// AI Generation Route
-const axios = require('axios');
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
+// Test GET route for /api/generate
+app.get('/api/generate', (req, res) => {
+  res.status(200).json({ 
+    status: 'success', 
+    message: 'GET request received. Please use POST for actual requests.',
+    example: {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userText: 'your text here', action: 'improve' })
+    }
+  });
+});
 
+// Simple local model for text generation
+const generateLocalResponse = (userText) => {
+  // This is a simple template-based response generator
+  // In a real app, you'd want to use a proper local model
+  const responses = [
+    `["Write a professional email to schedule a meeting about ${userText}. Include 2-3 time slots and ask for confirmation.",
+     "Draft a friendly but concise message to set up a call regarding ${userText}. Mention your availability and ask for theirs."]`,
+    
+    `["Compose a formal appointment request email for ${userText}. Include the purpose, expected duration, and your availability.",
+     "Create a brief message to schedule a video call about ${userText}. Suggest a few time slots and ask for confirmation."]`
+  ];
+  
+  // Return a random response from the template
+  return responses[Math.floor(Math.random() * responses.length)];
+};
+
+// AI Generation Route
 app.post('/api/generate', async (req, res) => {
   console.log('➡️ Received request for /api/generate');
   try {
@@ -38,65 +65,34 @@ app.post('/api/generate', async (req, res) => {
       return res.status(400).json({ error: 'userText and action are required.' });
     }
 
-    const prompt = `You are a world-class prompt engineer acting as a 'Prompt Enhancer'. Your task is to take a user's potentially vague idea and generate two distinct, high-quality prompts.
-
-Your internal thought process should be:
-Analyze the user's input to understand their core intent.
-Flesh out the idea with relevant details, considering context, style, and potential use cases (e.g., for image generation, for a chatbot, for a story).
-Based on this enhanced understanding, construct two separate, detailed prompts.
-
-The user's input is:
-${userText}
-
-Your final output MUST ONLY be a valid JSON array containing exactly two strings, representing the two generated prompts. Do not include your internal thought process or any other commentary in the final output.
-
-Example Final Output: ["First generated prompt...", "Second generated prompt..."]`;
-    console.log('   - 📝 Generated Prompt:', prompt);
-
-    console.log('   - 🚀 Sending request to Gemini API...');
-    const response = await axios.post(GEMINI_API_URL, {
-      contents: [{ parts: [{ text: prompt }] }],
-    });
-    console.log('   - ✅ Received response from Gemini API.');
-
-    const generatedText = response.data.candidates[0].content.parts[0].text;
-    console.log('   - 🤖 Extracted Text:', generatedText);
+    console.log('   - 🚀 Generating response with local model...');
+    const generatedText = generateLocalResponse(userText);
+    console.log('   - ✅ Generated response:', generatedText);
     
-    // Attempt to parse the string response into a JSON array
+    // Parse the JSON response
     let promptsArray;
     try {
-      // Clean the response to ensure it's valid JSON
-      const cleanedText = generatedText.trim().replace(/^```json\s*|```\s*$/g, '');
-      promptsArray = JSON.parse(cleanedText);
-      if (!Array.isArray(promptsArray) || promptsArray.length !== 2 || !promptsArray.every(item => typeof item === 'string')) {
-        throw new Error('Invalid format: Expected a JSON array of two strings.');
+      promptsArray = JSON.parse(generatedText);
+      if (!Array.isArray(promptsArray) || promptsArray.length !== 2) {
+        throw new Error('Generated text is not a valid JSON array of two strings.');
       }
     } catch (parseError) {
-      console.error('   - ❌ Error parsing AI response:', parseError.message);
-      // Fallback: return the raw text if parsing fails
-      promptsArray = [generatedText, "Could not generate a second prompt due to a formatting issue."];
+      console.error('   - ❌ Error parsing response:', parseError);
+      promptsArray = [
+        `Generate a professional email about: ${userText}`,
+        `Create a message regarding: ${userText}`
+      ];
     }
 
     console.log('   - ⬅️ Sending success response back to extension.');
-    // MODIFIED LINE: Send the array directly without the 'result' key
     res.status(200).json(promptsArray);
 
   } catch (error) {
-    console.error('   - ❌❌❌ FATAL ERROR calling Gemini API:');
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error('   - Error Data:', error.response.data);
-      console.error('   - Error Status:', error.response.status);
-      console.error('   - Error Headers:', error.response.headers);
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error('   - No response received:', error.request);
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error('   - Error Message:', error.message);
-    }
-    res.status(500).json({ error: 'Failed to generate text from AI.' });
+    console.error('   - ❌❌❌ ERROR:', error.message);
+    return res.status(500).json({
+      error: 'Failed to generate text',
+      details: error.message
+    });
   }
 });
 

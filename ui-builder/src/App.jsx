@@ -49,6 +49,22 @@ function App() {
     chrome.runtime.sendMessage({
       action: "processText",
       selectedText: inputText
+    }, (response) => {
+      // Handle direct response (for content scripts)
+      if (chrome.runtime.lastError) {
+        console.error('Error:', chrome.runtime.lastError);
+        setIsLoading(false);
+        return;
+      }
+      // If we get a direct response, also store it
+      if (response && response.success && response.prompts) {
+        chrome.storage.local.set({ 
+          lastResponse: { 
+            result: response.prompts,
+            error: null 
+          } 
+        });
+      }
     });
   };
 

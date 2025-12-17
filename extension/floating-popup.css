@@ -1,0 +1,325 @@
+/* Floating Icon Styles */
+#promptify-floating-container {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 999999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+#promptify-floating-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #8A2BE2 0%, #9370DB 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+  transition: all 0.3s ease;
+  color: white;
+  position: relative;
+  z-index: 1000000;
+}
+
+#promptify-floating-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(138, 43, 226, 0.6);
+}
+
+#promptify-floating-icon.active {
+  background: linear-gradient(135deg, #9932CC 0%, #8A2BE2 100%);
+}
+
+#promptify-floating-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Overlay Styles */
+#promptify-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999998;
+  backdrop-filter: blur(2px);
+}
+
+#promptify-popup-overlay.active {
+  display: flex;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Popup Styles */
+#promptify-popup {
+  width: 450px;
+  max-width: 90vw;
+  max-height: 85vh;
+  background: #301934;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.promptify-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #9370DB;
+  background: #483D8B;
+}
+
+.promptify-popup-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #E0E0E0;
+  font-weight: 600;
+}
+
+.promptify-close-btn {
+  background: transparent;
+  border: none;
+  color: #E0E0E0;
+  font-size: 28px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.promptify-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: rotate(90deg);
+}
+
+.promptify-popup-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.promptify-subtitle {
+  text-align: center;
+  color: #D8BFD8;
+  font-size: 14px;
+  margin: 0 0 20px 0;
+}
+
+#promptify-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#promptify-textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1px solid #9370DB;
+  border-radius: 8px;
+  resize: vertical;
+  box-sizing: border-box;
+  background-color: #483D8B;
+  color: #E0E0E0;
+  min-height: 100px;
+}
+
+#promptify-textarea:focus {
+  outline: none;
+  border-color: #8A2BE2;
+  box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
+}
+
+#promptify-submit-btn {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #fff;
+  background-color: #8A2BE2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#promptify-submit-btn:hover:not(:disabled) {
+  background-color: #9932CC;
+  border-color: #9370DB;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+}
+
+#promptify-submit-btn:disabled {
+  background-color: #555;
+  color: #aaa;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Response Styles */
+#promptify-response {
+  margin-top: 20px;
+}
+
+.promptify-prompts {
+  background-color: #483D8B;
+  border: 1px solid #9370DB;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.promptify-prompts h3 {
+  font-size: 16px;
+  color: #E0E0E0;
+  margin: 0 0 12px 0;
+}
+
+.promptify-prompt-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  background: rgba(138, 43, 226, 0.1);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(138, 43, 226, 0.2);
+}
+
+.promptify-prompt-item:last-child {
+  margin-bottom: 0;
+}
+
+.promptify-prompt-number {
+  min-width: 24px;
+  height: 24px;
+  background: #8A2BE2;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.promptify-prompt-text {
+  flex: 1;
+  font-size: 14px;
+  color: #D8BFD8;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.promptify-copy-btn {
+  background: #8A2BE2;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.promptify-copy-btn:hover {
+  background: #9932CC;
+  transform: translateY(-1px);
+}
+
+.promptify-error {
+  background-color: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  color: #ff6b6b;
+  font-size: 14px;
+}
+
+/* Scrollbar Styles */
+.promptify-popup-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.promptify-popup-content::-webkit-scrollbar-track {
+  background: #483D8B;
+  border-radius: 4px;
+}
+
+.promptify-popup-content::-webkit-scrollbar-thumb {
+  background: #9370DB;
+  border-radius: 4px;
+}
+
+.promptify-popup-content::-webkit-scrollbar-thumb:hover {
+  background: #8A2BE2;
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  #promptify-popup {
+    width: 95vw;
+    max-height: 90vh;
+  }
+
+  #promptify-floating-icon {
+    width: 48px;
+    height: 48px;
+    right: 15px;
+    bottom: 15px;
+  }
+
+  .promptify-prompt-item {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .promptify-copy-btn {
+    width: 100%;
+  }
+}
+
+
+

@@ -172,10 +172,17 @@
 
         let html = '<div class="promptify-prompts"><h3>Generated Prompts:</h3>';
         prompts.forEach((prompt, index) => {
-          html += `<div class="promptify-prompt-item">
-            <div class="promptify-prompt-number">${index + 1}</div>
+          html += `<div class="promptify-prompt-card">
+            <div class="promptify-prompt-header">
+              <div class="promptify-prompt-number">${index + 1}</div>
+              <button class="promptify-copy-btn" data-prompt="${escapeHtml(prompt)}" title="Copy prompt">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
+                </svg>
+                <span class="copy-text">Copy</span>
+              </button>
+            </div>
             <div class="promptify-prompt-text">${escapeHtml(prompt)}</div>
-            <button class="promptify-copy-btn" data-prompt="${escapeHtml(prompt)}">Copy</button>
           </div>`;
         });
         html += '</div>';
@@ -184,13 +191,18 @@
         // Add copy button listeners
         responseDiv.querySelectorAll('.promptify-copy-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
-            const prompt = e.target.getAttribute('data-prompt');
+            const prompt = e.target.closest('.promptify-copy-btn').getAttribute('data-prompt');
             navigator.clipboard.writeText(prompt).then(() => {
-              const originalText = e.target.textContent;
-              e.target.textContent = 'Copied!';
+              const copyText = btn.querySelector('.copy-text');
+              const originalText = copyText.textContent;
+              copyText.textContent = 'Copied!';
+              btn.classList.add('copied');
               setTimeout(() => {
-                e.target.textContent = originalText;
+                copyText.textContent = originalText;
+                btn.classList.remove('copied');
               }, 2000);
+            }).catch(err => {
+              console.error('Failed to copy:', err);
             });
           });
         });

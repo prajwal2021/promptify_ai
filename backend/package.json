@@ -16,7 +16,9 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "llama-node": "^0.1.6",
-    "mongoose": "^8.17.0"
+    "mongoose": "^8.17.0",
+    "natural": "^8.1.0",
+    "spellchecker": "^3.7.1"
   },
   "devDependencies": {
     "prisma": "^6.13.0"

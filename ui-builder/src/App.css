@@ -131,21 +131,109 @@ button:disabled {
 /* Response Container */
 .responseContainer {
   margin-top: 20px;
-  padding: 15px;
-  background-color: #483D8B;
-  border: 1px solid #9370DB;
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .responseContainer h2 {
   font-size: 16px;
   color: #E0E0E0;
   margin-top: 0;
+  margin-bottom: 4px;
+  font-weight: 600;
 }
 
-.responseContainer p {
+.prompt-card {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(147, 112, 219, 0.1) 100%);
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-card:hover {
+  border-color: rgba(138, 43, 226, 0.5);
+  box-shadow: 0 4px 16px rgba(138, 43, 226, 0.2);
+  transform: translateY(-2px);
+}
+
+.prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.prompt-number {
+  min-width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #8A2BE2 0%, #9370DB 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(138, 43, 226, 0.4);
+}
+
+.prompt-text {
   font-size: 14px;
-  color: #D8BFD8;
+  color: #E0E0E0;
+  line-height: 1.6;
   white-space: pre-wrap;
+  word-wrap: break-word;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(138, 43, 226, 0.2);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   text-align: left;
+}
+
+.copy-button {
+  background: linear-gradient(135deg, #8A2BE2 0%, #9370DB 100%);
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(138, 43, 226, 0.3);
+}
+
+.copy-button:hover {
+  background: linear-gradient(135deg, #9932CC 0%, #8A2BE2 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+}
+
+.copy-button:active {
+  transform: translateY(0);
+}
+
+.copy-button.copied {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.copy-button svg {
+  flex-shrink: 0;
+}
+
+.copy-button .copy-text {
+  font-size: 12px;
+  font-weight: 600;
 }

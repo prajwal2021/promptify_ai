@@ -5,7 +5,14 @@ const API_URL = 'http://localhost:8000';
 const logError = async (message, details = {}) => {
   const timestamp = new Date().toISOString();
   const errorLog = { timestamp, message, details };
-  console.error(`[${timestamp}]`, message, details);
+  
+  // Format details for console output
+  const detailsStr = typeof details === 'object' && details !== null
+    ? JSON.stringify(details, null, 2)
+    : String(details);
+  
+  console.error(`[${timestamp}] ${message}`, detailsStr);
+  console.error('Full error details:', details);
   
   // Save the last 5 errors
   const result = await chrome.storage.local.get({ errorLogs: [] });

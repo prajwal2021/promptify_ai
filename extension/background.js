@@ -1,5 +1,10 @@
 // API configuration
-const API_URL = 'http://localhost:8000';
+// Production: Uses Vercel deployment URL
+// For local development: Uncomment the localhost line below and comment out the Vercel URL
+const API_URL = 'https://promptify-ai-three.vercel.app';
+
+// Alternative: Uncomment the line below to use localhost for development
+// const API_URL = 'http://localhost:8000';
 
 // Helper function to log to both console and storage
 const logError = async (message, details = {}) => {

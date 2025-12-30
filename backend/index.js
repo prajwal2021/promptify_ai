@@ -21,11 +21,36 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB (optional - only if MONGODB_URI is provided)
-if (process.env.MONGODB_URI) {
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ Successfully connected to MongoDB.'))
-  .catch(err => console.error('❌ Connection error', err));
+// For serverless environments like Vercel, we need to handle reconnection
+async function connectDB() {
+  if (!process.env.MONGODB_URI) {
+    console.log('⚠️ MONGODB_URI not set, MongoDB connection skipped');
+    return;
+  }
+
+  // If already connected, return
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    });
+    console.log('✅ Successfully connected to MongoDB.');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err.message);
+    // Don't throw - let the routes handle the connection state
+  }
 }
+
+// Connect on startup (for local development)
+connectDB();
+
+// For serverless: reconnect if disconnected
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️ MongoDB disconnected, will reconnect on next request');
+});
 
 // Simple test route
 app.get('/', (req, res) => {
@@ -55,6 +80,9 @@ const authenticateToken = (req, res, next) => {
 // Sign Up Route
 app.post('/api/auth/signup', async (req, res) => {
   try {
+    // Ensure MongoDB is connected (important for serverless)
+    await connectDB();
+    
     // Check if MongoDB is connected
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ 
@@ -112,6 +140,9 @@ app.post('/api/auth/signup', async (req, res) => {
 // Sign In Route
 app.post('/api/auth/login', async (req, res) => {
   try {
+    // Ensure MongoDB is connected (important for serverless)
+    await connectDB();
+    
     // Check if MongoDB is connected
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ 
@@ -1128,5 +1159,5 @@ if (require.main === module) {
 }
 
 // Export for Vercel serverless functions
-// Vercel expects a handler function for serverless functions
+// Vercel serverless functions need to export the handler
 module.exports = app;

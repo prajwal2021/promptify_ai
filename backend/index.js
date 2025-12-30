@@ -64,6 +64,43 @@ app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Backend is running.' });
 });
 
+// Diagnostic route to check MongoDB connection and environment variables
+app.get('/api/health', async (req, res) => {
+  const hasMongoUri = !!process.env.MONGODB_URI;
+  const mongoState = mongoose.connection.readyState;
+  const stateNames = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+  
+  // Try to connect if not connected
+  if (!hasMongoUri) {
+    return res.status(503).json({
+      status: 'error',
+      message: 'MONGODB_URI environment variable is not set',
+      mongoState: stateNames[mongoState] || 'unknown',
+      hasMongoUri: false
+    });
+  }
+  
+  if (mongoState !== 1) {
+    await connectDB();
+  }
+  
+  const finalState = mongoose.connection.readyState;
+  
+  res.status(finalState === 1 ? 200 : 503).json({
+    status: finalState === 1 ? 'ok' : 'error',
+    message: finalState === 1 ? 'MongoDB is connected' : 'MongoDB connection failed',
+    mongoState: stateNames[finalState] || 'unknown',
+    mongoStateCode: finalState,
+    hasMongoUri: true,
+    uriPrefix: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 30) + '...' : 'not set'
+  });
+});
+
 // Authentication Middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];

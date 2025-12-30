@@ -199,6 +199,9 @@ app.post('/api/auth/login', async (req, res) => {
 // Google OAuth Sign Up/Sign In Route
 app.post('/api/auth/google', async (req, res) => {
   try {
+    // Ensure MongoDB is connected (important for serverless)
+    await connectDB();
+    
     // Check if MongoDB is connected
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ 

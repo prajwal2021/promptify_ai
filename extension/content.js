@@ -193,7 +193,14 @@
             body: JSON.stringify({ email, username, password })
           });
 
-          const data = await response.json();
+          let data;
+          try {
+            data = await response.json();
+          } catch (parseError) {
+            const text = await response.text();
+            showAuthError(`Server error: ${response.status} ${response.statusText}. ${text}`);
+            return;
+          }
 
           if (response.ok && data.success) {
             chrome.storage.local.set({ 
@@ -203,10 +210,11 @@
               updateUIForAuthState();
             });
           } else {
-            showAuthError(data.error || 'Sign up failed');
+            showAuthError(data.error || data.message || 'Sign up failed');
           }
         } catch (error) {
-          showAuthError('Failed to connect to server. Please try again.');
+          console.error('Signup error:', error);
+          showAuthError(`Failed to connect to server: ${error.message}. Please check if the backend is running at ${API_URL}`);
         }
       });
 
@@ -223,7 +231,14 @@
             body: JSON.stringify({ email, password })
           });
 
-          const data = await response.json();
+          let data;
+          try {
+            data = await response.json();
+          } catch (parseError) {
+            const text = await response.text();
+            showAuthError(`Server error: ${response.status} ${response.statusText}. ${text}`);
+            return;
+          }
 
           if (response.ok && data.success) {
             chrome.storage.local.set({ 
@@ -233,10 +248,11 @@
               updateUIForAuthState();
             });
           } else {
-            showAuthError(data.error || 'Login failed');
+            showAuthError(data.error || data.message || 'Login failed');
           }
         } catch (error) {
-          showAuthError('Failed to connect to server. Please try again.');
+          console.error('Login error:', error);
+          showAuthError(`Failed to connect to server: ${error.message}. Please check if the backend is running at ${API_URL}`);
         }
       });
 

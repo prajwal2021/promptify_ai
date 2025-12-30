@@ -1120,13 +1120,13 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-// Export the app for Vercel serverless functions
 // If running locally, start the server
 if (require.main === module) {
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-});
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  });
 }
 
-// Export for Vercel
+// Export for Vercel serverless functions
+// Vercel expects a handler function for serverless functions
 module.exports = app;

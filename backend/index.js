@@ -30,16 +30,23 @@ async function connectDB() {
 
   // If already connected, return
   if (mongoose.connection.readyState === 1) {
+    console.log('✅ MongoDB already connected');
     return;
   }
 
   try {
+    console.log('🔄 Attempting to connect to MongoDB...');
+    // Hide password in logs for security
+    const uriForLog = process.env.MONGODB_URI.replace(/:([^:@]+)@/, ':***@');
+    console.log('📍 Connection URI:', uriForLog);
+    
     await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      serverSelectionTimeoutMS: 10000, // 10 second timeout
     });
     console.log('✅ Successfully connected to MongoDB.');
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
+    console.error('❌ Error details:', err);
     // Don't throw - let the routes handle the connection state
   }
 }

@@ -2,7 +2,11 @@
 (function() {
   'use strict';
 
-  const API_URL = 'http://localhost:8000'; // Backend API URL
+  // Production: Uses Vercel deployment URL
+  const API_URL = 'https://promptify-ai-three.vercel.app';
+  
+  // For local development: Comment out the Vercel URL above and uncomment the localhost line below
+  // const API_URL = 'http://localhost:8000';
 
   // Get DOM elements
   const loggedInContent = document.getElementById('logged-in-content');

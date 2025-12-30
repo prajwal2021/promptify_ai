@@ -1,10 +1,9 @@
 // API configuration
 // Production: Uses Vercel deployment URL
-// For local development: Comment out the Vercel URL and uncomment the localhost line below
-// const API_URL = 'https://promptify-ai-three.vercel.app';
+const API_URL = 'https://promptify-ai-three.vercel.app';
 
-// Local development: Use localhost
-const API_URL = 'http://localhost:8000';
+// For local development: Comment out the Vercel URL above and uncomment the localhost line below
+// const API_URL = 'http://localhost:8000';
 
 // Helper function to log to both console and storage
 const logError = async (message, details = {}) => {
@@ -17,7 +16,6 @@ const logError = async (message, details = {}) => {
     : String(details);
   
   console.error(`[${timestamp}] ${message}`, detailsStr);
-  console.error('Full error details:', details);
   
   // Save the last 5 errors
   const result = await chrome.storage.local.get({ errorLogs: [] });

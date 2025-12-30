@@ -1,10 +1,10 @@
 // API configuration
 // Production: Uses Vercel deployment URL
-// For local development: Uncomment the localhost line below and comment out the Vercel URL
-const API_URL = 'https://promptify-ai-three.vercel.app';
+// For local development: Comment out the Vercel URL and uncomment the localhost line below
+// const API_URL = 'https://promptify-ai-three.vercel.app';
 
-// Alternative: Uncomment the line below to use localhost for development
-// const API_URL = 'http://localhost:8000';
+// Local development: Use localhost
+const API_URL = 'http://localhost:8000';
 
 // Helper function to log to both console and storage
 const logError = async (message, details = {}) => {
@@ -44,14 +44,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // Handle the message
   if (request.action === "processText") {
     console.log("📨 Background script received text:", request.selectedText);
+    const actionType = request.actionType || "prompt";
+    const context = request.context || null;
+    const text1 = request.text1 || null;
+    const text2 = request.text2 || null;
+    console.log("📨 Action type:", actionType);
+    if (context) {
+      console.log("📨 Context provided:", context);
+    }
+    if (text1 && text2) {
+      console.log("📨 Compare mode - Text1:", text1);
+      console.log("📨 Compare mode - Text2:", text2);
+    }
+    
+    // For compare action, combine both texts
+    let userText = request.selectedText;
+    if (actionType === 'compare' && text1 && text2) {
+      userText = `TEXT 1: "${text1}"\n\nTEXT 2: "${text2}"`;
+    }
     
     // Call our backend API
     fetch(`${API_URL}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userText: request.selectedText,
-        action: "improve"
+        userText: userText,
+        action: actionType,
+        context: context,
+        text1: text1,
+        text2: text2
       }),
       credentials: 'include'  // Important for cookies, if any
     })
@@ -80,14 +101,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       // Store in chrome.storage for popup to listen
       chrome.storage.local.set({ 
         lastResponse: { 
-          result: Array.isArray(data) ? data : [data],
+          result: data, // Store as-is (could be array of prompts or AI response object)
           error: null 
         } 
       });
       
       if (!isResponseSent) {
         // Also send response for content script if needed
-        sendResponse({ success: true, prompts: data });
+        if (data && typeof data === 'object' && data.type === 'ai-response') {
+          sendResponse({ success: true, aiResponse: data });
+        } else {
+          sendResponse({ success: true, prompts: Array.isArray(data) ? data : [data] });
+        }
         isResponseSent = true;
       }
     })
@@ -103,6 +128,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       
       if (!isResponseSent) {
         // Provide a fallback response if the API fails
+        const actionType = request.actionType || "prompt";
+        
+        // For non-prompt actions, show error message instead of fallback prompts
+        if (actionType !== 'prompt') {
+          const errorMessage = `Failed to get AI response. Please ensure the backend is running and GEMINI_API_KEY is configured.`;
+          
+          chrome.storage.local.set({ 
+            lastResponse: { 
+              result: null,
+              error: errorMessage,
+              isFallback: false
+            } 
+          });
+          
+          sendResponse({ 
+            success: false,
+            error: errorMessage
+          });
+          isResponseSent = true;
+          return;
+        }
+        
+        // Only generate fallback prompts for 'prompt' action
         const fallbackPrompts = [
           `Create a professional email about: ${request.selectedText}`,
           `Draft a message regarding: ${request.selectedText}`

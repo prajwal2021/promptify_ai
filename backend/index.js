@@ -6,6 +6,11 @@ require('dotenv').config();
 const axios = require('axios');
 const natural = require('natural');
 const { Spellchecker } = require('spellchecker');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+// Import User model
+const User = require('./models/userModel');
 
 // Initialize Express app
 const app = express();
@@ -25,6 +30,208 @@ mongoose.connect(process.env.MONGODB_URI)
 // Simple test route
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Backend is running.' });
+});
+
+// Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production', (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// Authentication Routes
+
+// Sign Up Route
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ 
+        error: 'Database not connected', 
+        message: 'Please configure MONGODB_URI in your .env file. See AUTHENTICATION_SETUP.md for instructions.' 
+      });
+    }
+
+    const { email, username, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = new User({
+      email: email.toLowerCase(),
+      username: username || email.split('@')[0],
+      password: hashedPassword
+    });
+
+    await user.save();
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      { expiresIn: '30d' }
+    );
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username
+      }
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ error: 'Failed to create user', details: error.message });
+  }
+});
+
+// Sign In Route
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ 
+        error: 'Database not connected', 
+        message: 'Please configure MONGODB_URI in your .env file. See AUTHENTICATION_SETUP.md for instructions.' 
+      });
+    }
+
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Check if user has password (not Google OAuth only)
+    if (!user.password) {
+      return res.status(401).json({ error: 'Please sign in with Google' });
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      { expiresIn: '30d' }
+    );
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Failed to login', details: error.message });
+  }
+});
+
+// Google OAuth Sign Up/Sign In Route
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ 
+        error: 'Database not connected', 
+        message: 'Please configure MONGODB_URI in your .env file. See AUTHENTICATION_SETUP.md for instructions.' 
+      });
+    }
+
+    const { googleId, email, username, name } = req.body;
+
+    if (!googleId || !email) {
+      return res.status(400).json({ error: 'Google ID and email are required' });
+    }
+
+    // Check if user exists with Google ID
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      // Check if user exists with email (might have signed up with email/password)
+      user = await User.findOne({ email: email.toLowerCase() });
+      
+      if (user) {
+        // Update existing user with Google ID
+        user.googleId = googleId;
+        await user.save();
+      } else {
+        // Create new user
+        user = new User({
+          email: email.toLowerCase(),
+          username: username || name || email.split('@')[0],
+          googleId: googleId
+        });
+        await user.save();
+      }
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      { expiresIn: '30d' }
+    );
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username
+      }
+    });
+  } catch (error) {
+    console.error('Google OAuth error:', error);
+    res.status(500).json({ error: 'Failed to authenticate with Google', details: error.message });
+  }
+});
+
+// Verify Token Route
+app.get('/api/auth/verify', authenticateToken, (req, res) => {
+  res.status(200).json({
+    success: true,
+    user: req.user
+  });
 });
 
 // Test GET route for /api/generate
@@ -220,9 +427,104 @@ const correctSpellingFallback = (text) => {
   return correctedText;
 };
 
+// Call AI API directly to get response (for explain, summarize, etc.)
+const callAIDirectly = async (userText, actionType, context = null, text1 = null, text2 = null) => {
+  if (!process.env.GEMINI_API_KEY) {
+    console.log('   - ⚠️ GEMINI_API_KEY not set, cannot call AI API');
+    return null;
+  }
+
+  // Build the prompt based on action type
+  let prompt = '';
+  
+  // Include context if provided
+  if (context) {
+    prompt += `Here is the context of the following question: "${context}"\n\n---\n\n`;
+  }
+  
+  switch (actionType) {
+    case 'explain':
+      prompt += `TASK: Explain the following text in a easy-to-understand way.\n\nTEXT: "${userText}"`;
+      break;
+    case 'summarize':
+      prompt += `TASK: Summarize the key points of the following text.\n\nTEXT: "${userText}"`;
+      break;
+    case 'example':
+      prompt += `TASK: Provide 2-3 clear and simple examples of the concept in the following text.\n\nTEXT: "${userText}"`;
+      break;
+    case 'compare':
+      // For compare, use text1 and text2 if provided (two-step compare), otherwise use userText
+      if (text1 && text2) {
+        prompt += `TASK: Compare and contrast the following two texts. Explain their similarities and differences.\n\nTEXT 1: "${text1}"\nTEXT 2: "${text2}"`;
+      } else {
+        prompt += `TASK: Compare and contrast the following two texts. Explain their similarities and differences.\n\n${userText}`;
+      }
+      break;
+    case 'add-context':
+      prompt += `TASK: Add relevant context, background information, and supporting details to enrich understanding of the following.\n\nTEXT: "${userText}"`;
+      break;
+    default:
+      prompt += `Please help with the following:\n\n${userText}`;
+  }
+
+  try {
+    // Use gemini-2.5-flash model
+    const modelName = 'gemini-2.5-flash';
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    
+    console.log('   - 🔗 Calling Gemini API...');
+    console.log('   - 📝 Prompt length:', prompt.length);
+    console.log('   - 📋 Prompt content:', prompt.substring(0, 200) + (prompt.length > 200 ? '...' : ''));
+    
+    const response = await axios.post(GEMINI_API_URL, {
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }]
+    }, {
+      timeout: 30000, // 30 second timeout
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('   - ✅ Gemini API response received');
+    
+    if (response.data && response.data.candidates && response.data.candidates[0]) {
+      const generatedText = response.data.candidates[0].content.parts[0].text;
+      console.log('   - 📄 Response length:', generatedText.length);
+      return generatedText.trim();
+    }
+    
+    throw new Error('Invalid response format from Gemini API');
+  } catch (error) {
+    console.error('   - ❌ AI API Error:', error.message);
+    if (error.response) {
+      console.error('   - 📋 API Response Status:', error.response.status);
+      console.error('   - 📋 API Response Data:', JSON.stringify(error.response.data, null, 2));
+      
+      // Provide more helpful error messages
+      if (error.response.status === 404) {
+        throw new Error('Gemini API endpoint not found. Please check if the model name is correct or if your API key has access to this model.');
+      } else if (error.response.status === 401 || error.response.status === 403) {
+        throw new Error('Invalid or unauthorized API key. Please check your GEMINI_API_KEY.');
+      } else if (error.response.status === 429) {
+        throw new Error('API rate limit exceeded. Please try again later.');
+      } else {
+        throw new Error(`Gemini API error (${error.response.status}): ${JSON.stringify(error.response.data)}`);
+      }
+    } else if (error.request) {
+      throw new Error('No response from Gemini API. Please check your internet connection.');
+    } else {
+      throw error;
+    }
+  }
+};
+
 // AI API Integration (Ready for Gemini, OpenAI, etc.)
 // This function uses the structured prompt engineering approach with AI APIs
-const generateWithAI = async (userText) => {
+const generateWithAI = async (userText, actionType = 'prompt') => {
   // System message defining the prompt engineer role
   const systemMessage = {
     role: "system",
@@ -286,9 +588,229 @@ Generate TWO distinct, high-quality EXECUTABLE prompts based on the user input. 
   return null;
 };
 
+// Generate prompts based on action type
+const generateActionPrompts = (userText, actionType, context = null) => {
+  // Build context prefix if context is provided
+  let contextPrefix = '';
+  if (context) {
+    contextPrefix = `Here is the context of the following question: "${context}"\n\n---\n\n`;
+  }
+  const correctedText = correctSpelling(userText);
+  if (correctedText !== userText) {
+    console.log(`   - ✏️ Spelling corrected: "${userText}" → "${correctedText}"`);
+  }
+
+  switch (actionType) {
+    case 'explain':
+      return [
+        `${contextPrefix}Act as an Expert Educator and Technical Writer.
+
+**Task**: Provide a clear, comprehensive explanation of the following concept, topic, or statement.
+
+**Context**: ${correctedText}
+
+**Constraints**:
+- Break down complex ideas into understandable parts
+- Use clear, simple language
+- Include relevant examples when helpful
+- Address the "why" and "how" behind the concept
+- Structure the explanation logically
+
+**Format**: Provide a detailed explanation with clear sections, examples, and key takeaways.
+
+**Goal**: Deliver an explanation that makes the concept accessible and easy to understand for someone learning about it.`,
+
+        `${contextPrefix}You are a Knowledge Specialist and Communication Expert.
+
+**Task**: Explain the following in a way that is both accurate and accessible.
+
+**User Input**: ${correctedText}
+
+**Context/Constraints**:
+- Be thorough but not overwhelming
+- Use analogies when appropriate
+- Highlight key points and important details
+- Address potential questions or confusions
+- Maintain accuracy and precision
+
+**Format**: Deliver a comprehensive explanation that covers the topic from multiple angles with clear organization.
+
+**Goal**: Provide an explanation that educates and clarifies, leaving the reader with a solid understanding.`
+      ];
+
+    case 'summarize':
+      return [
+        `${contextPrefix}Act as a Professional Summarizer and Information Analyst.
+
+**Task**: Create a concise, comprehensive summary of the following content.
+
+**Context**: ${correctedText}
+
+**Constraints**:
+- Capture the essential points and main ideas
+- Maintain accuracy of key information
+- Be concise yet complete
+- Highlight important details and conclusions
+- Preserve the original meaning
+
+**Format**: Provide a well-structured summary with key points, main ideas, and important conclusions.
+
+**Goal**: Deliver a summary that efficiently conveys the core information and insights from the original content.`,
+
+        `${contextPrefix}You are an Expert in Information Synthesis and Communication.
+
+**Task**: Summarize the following content, distilling it to its most important elements.
+
+**User Input**: ${correctedText}
+
+**Context/Constraints**:
+- Focus on the main message and key takeaways
+- Eliminate redundancy while preserving meaning
+- Organize information logically
+- Include critical details and findings
+- Keep the summary clear and actionable
+
+**Format**: Deliver a concise summary that captures the essence and important details in an organized format.
+
+**Goal**: Provide a summary that gives readers a complete understanding of the content without reading the full original.`
+      ];
+
+    case 'example':
+      return [
+        `${contextPrefix}Act as a Practical Examples Specialist and Educational Content Creator.
+
+**Task**: Provide concrete, relevant examples that illustrate the following concept, topic, or idea.
+
+**Context**: ${correctedText}
+
+**Constraints**:
+- Use clear, relatable examples
+- Cover different scenarios or use cases
+- Make examples practical and applicable
+- Include both simple and more complex examples when appropriate
+- Ensure examples accurately represent the concept
+
+**Format**: Provide multiple well-explained examples with context, demonstrating how the concept applies in practice.
+
+**Goal**: Deliver examples that clarify and demonstrate the concept effectively, making it easier to understand and apply.`,
+
+        `${contextPrefix}You are an Expert at Creating Illustrative Examples and Use Cases.
+
+**Task**: Generate practical examples that demonstrate the following concept or idea.
+
+**User Input**: ${correctedText}
+
+**Context/Constraints**:
+- Provide diverse, realistic examples
+- Explain how each example relates to the concept
+- Use scenarios that are easy to understand
+- Include step-by-step breakdowns when helpful
+- Make examples actionable and relevant
+
+**Format**: Deliver a collection of examples with explanations, showing different ways the concept can be applied or understood.
+
+**Goal**: Provide examples that bring the concept to life and make it tangible and easier to grasp.`
+      ];
+
+    case 'compare':
+      return [
+        `${contextPrefix}Act as a Comparative Analysis Expert and Research Analyst.
+
+**Task**: Create a detailed comparison of the following items, concepts, or ideas.
+
+**Context**: ${correctedText}
+
+**Constraints**:
+- Identify key similarities and differences
+- Evaluate strengths and weaknesses
+- Provide balanced, objective analysis
+- Consider multiple dimensions (features, use cases, advantages, limitations)
+- Draw meaningful conclusions
+
+**Format**: Provide a structured comparison with clear sections covering similarities, differences, and recommendations.
+
+**Goal**: Deliver a comparison that helps readers understand the relative merits, differences, and best use cases for each option.`,
+
+        `${contextPrefix}You are a Professional Comparative Analyst and Decision Support Specialist.
+
+**Task**: Perform a comprehensive comparison of the following items or concepts.
+
+**User Input**: ${correctedText}
+
+**Context/Constraints**:
+- Analyze each item systematically
+- Highlight important distinctions
+- Consider practical implications
+- Provide insights and recommendations
+- Be thorough and objective
+
+**Format**: Deliver a well-organized comparison with analysis, key differences, and actionable insights.
+
+**Goal**: Provide a comparison that enables informed decision-making by clearly presenting the relative advantages and trade-offs.`
+      ];
+
+    case 'add-context':
+      return [
+        `Act as a Contextual Information Specialist and Background Researcher.
+
+**Task**: Add relevant context, background information, and additional details to enrich understanding of the following.
+
+**Context**: ${correctedText}
+
+**Constraints**:
+- Provide relevant historical or background context
+- Include related information that enhances understanding
+- Connect to broader themes or concepts
+- Add supporting details and explanations
+- Maintain relevance and accuracy
+
+**Format**: Provide the original content enhanced with contextual information, background details, and relevant connections.
+
+**Goal**: Deliver content that is enriched with context, making it more meaningful and easier to understand within a broader framework.`,
+
+        `You are an Expert at Adding Context and Enriching Information.
+
+**Task**: Enhance the following content with relevant context, background, and supporting information.
+
+**User Input**: ${correctedText}
+
+**Context/Constraints**:
+- Add meaningful background information
+- Include relevant connections and relationships
+- Provide additional details that add value
+- Connect to related concepts or examples
+- Ensure all additions are accurate and relevant
+
+**Format**: Deliver the content with integrated contextual information, background details, and enhanced explanations.
+
+**Goal**: Provide enriched content that gives readers a deeper, more comprehensive understanding with proper context and background.`
+      ];
+
+    case 'prompt':
+    default:
+      // Use the existing generateStructuredPrompts logic
+      return generatePromptPair(correctedText, detectPromptType(correctedText));
+  }
+};
+
+// Detect prompt type based on keywords
+const detectPromptType = (text) => {
+  const lowerText = text.toLowerCase();
+  if (lowerText.includes('code') || lowerText.includes('program') || lowerText.includes('function') || lowerText.includes('algorithm') || lowerText.includes('api')) {
+    return 'technical';
+  } else if (lowerText.includes('email') || lowerText.includes('message') || lowerText.includes('send')) {
+    return 'communication';
+  } else if (lowerText.includes('write') || lowerText.includes('create') || lowerText.includes('generate')) {
+    return 'content';
+  } else if (lowerText.includes('meeting') || lowerText.includes('schedule') || lowerText.includes('call')) {
+    return 'scheduling';
+  }
+  return 'general';
+};
+
 // Structured Prompt Engineering System
 // This function generates high-quality, structured prompts following best practices
-const generateStructuredPrompts = async (userText) => {
+const generateStructuredPrompts = async (userText, actionType = 'prompt', context = null) => {
   // Correct spelling mistakes in user input first
   const correctedText = correctSpelling(userText);
   if (correctedText !== userText) {
@@ -297,7 +819,7 @@ const generateStructuredPrompts = async (userText) => {
   
   // Try AI API first if available (use corrected text)
   try {
-    const aiResult = await generateWithAI(correctedText);
+    const aiResult = await generateWithAI(correctedText, actionType);
     if (aiResult && Array.isArray(aiResult) && aiResult.length === 2) {
       return JSON.stringify(aiResult);
     }
@@ -306,26 +828,10 @@ const generateStructuredPrompts = async (userText) => {
   }
   
   // Fallback to template-based generation
-  // Analyze user input to determine context and generate appropriate prompts
-  // Use corrected text for keyword detection but original for display if needed
-  const lowerText = correctedText.toLowerCase();
+  console.log(`   - 📊 Using action type: ${actionType} for input: "${correctedText}"`);
   
-  // Determine prompt type based on keywords (check technical first since it's more specific)
-  let promptType = 'general';
-  if (lowerText.includes('code') || lowerText.includes('program') || lowerText.includes('function') || lowerText.includes('algorithm') || lowerText.includes('api')) {
-    promptType = 'technical';
-  } else if (lowerText.includes('email') || lowerText.includes('message') || lowerText.includes('send')) {
-    promptType = 'communication';
-  } else if (lowerText.includes('write') || lowerText.includes('create') || lowerText.includes('generate')) {
-    promptType = 'content';
-  } else if (lowerText.includes('meeting') || lowerText.includes('schedule') || lowerText.includes('call')) {
-    promptType = 'scheduling';
-  }
-  
-  console.log(`   - 📊 Detected prompt type: ${promptType} for input: "${correctedText}"`);
-  
-  // Generate two distinct structured prompts based on type (use corrected text)
-  const prompts = generatePromptPair(correctedText, promptType);
+  // Generate prompts based on action type
+  const prompts = generateActionPrompts(correctedText, actionType, context);
   console.log(`   - ✅ Generated ${prompts.length} prompts`);
   
   // Return as JSON array string
@@ -520,46 +1026,90 @@ const generatePromptPair = (userText, type) => {
 app.post('/api/generate', async (req, res) => {
   console.log('➡️ Received request for /api/generate');
   try {
-    const { userText, action } = req.body;
+    const { userText, action, context, text1, text2 } = req.body;
     console.log(`   - User Text: ${userText}`);
     console.log(`   - Action: ${action}`);
-
-    if (!userText || !action) {
-      console.log('   - ❌ Error: Missing userText or action.');
-      return res.status(400).json({ error: 'userText and action are required.' });
+    if (context) {
+      console.log(`   - Context: ${context}`);
+    }
+    if (text1 && text2) {
+      console.log(`   - Compare mode - Text1: ${text1}`);
+      console.log(`   - Compare mode - Text2: ${text2}`);
     }
 
-    console.log('   - 🚀 Generating structured prompts...');
-    const generatedText = await generateStructuredPrompts(userText);
-    console.log('   - ✅ Generated response (type:', typeof generatedText, '):', generatedText.substring(0, 200) + '...');
+    if (!userText) {
+      console.log('   - ❌ Error: Missing userText.');
+      return res.status(400).json({ error: 'userText is required.' });
+    }
+
+    // Default action is 'prompt' if not provided
+    const actionType = action || 'prompt';
+    
+    // Normalize action type to handle variations
+    const normalizedAction = actionType.toLowerCase().replace(/[^a-z-]/g, '');
+    const validActions = ['explain', 'summarize', 'example', 'compare', 'add-context', 'prompt'];
+    const finalAction = validActions.includes(normalizedAction) ? normalizedAction : 'prompt';
+
+    // If action is 'prompt', generate prompts. Otherwise, call AI directly for response
+    if (finalAction === 'prompt') {
+      console.log('   - 🚀 Generating structured prompts...');
+      const generatedText = await generateStructuredPrompts(userText, finalAction, context || null);
+      console.log('   - ✅ Generated response (type:', typeof generatedText, '):', generatedText.substring(0, 200) + '...');
     
     // Parse the JSON response
     let promptsArray;
     try {
       promptsArray = JSON.parse(generatedText);
-      console.log('   - ✅ Parsed successfully, array length:', promptsArray.length);
-      if (!Array.isArray(promptsArray)) {
-        console.error('   - ❌ Parsed result is not an array:', typeof promptsArray);
-        throw new Error('Generated text is not a valid JSON array.');
-      }
-      if (promptsArray.length !== 2) {
-        console.error('   - ❌ Array length is not 2:', promptsArray.length);
+        console.log('   - ✅ Parsed successfully, array length:', promptsArray.length);
+        if (!Array.isArray(promptsArray)) {
+          console.error('   - ❌ Parsed result is not an array:', typeof promptsArray);
+          throw new Error('Generated text is not a valid JSON array.');
+        }
+        if (promptsArray.length !== 2) {
+          console.error('   - ❌ Array length is not 2:', promptsArray.length);
         throw new Error('Generated text is not a valid JSON array of two strings.');
       }
-      console.log('   - ✅ Validation passed, prompts ready');
+        console.log('   - ✅ Validation passed, prompts ready');
     } catch (parseError) {
-      console.error('   - ❌ Error parsing response:', parseError.message);
-      console.error('   - Raw generated text:', generatedText);
-      // Fallback: Generate basic structured prompts
+        console.error('   - ❌ Error parsing response:', parseError.message);
+        console.error('   - Raw generated text:', generatedText);
+        // Fallback: Generate basic structured prompts
       promptsArray = [
-        `Act as an Expert Prompt Engineer.\n\n**Task**: Transform this input into a structured prompt.\n\n**Context**: ${userText}\n\n**Format**: Structured prompt with clear sections\n\n**Goal**: Generate high-quality, actionable outputs.`,
-        `You are a Professional AI Prompt Specialist.\n\n**Task**: Restructure this input into an executable prompt.\n\n**User Input**: ${userText}\n\n**Context/Constraints**: Include necessary background and format requirements\n\n**Goal**: Create a prompt that produces precise, well-formatted results.`
-      ];
-      console.log('   - ⚠️ Using fallback prompts');
-    }
+          `Act as an Expert Prompt Engineer.\n\n**Task**: Transform this input into a structured prompt.\n\n**Context**: ${userText}\n\n**Format**: Structured prompt with clear sections\n\n**Goal**: Generate high-quality, actionable outputs.`,
+          `You are a Professional AI Prompt Specialist.\n\n**Task**: Restructure this input into an executable prompt.\n\n**User Input**: ${userText}\n\n**Context/Constraints**: Include necessary background and format requirements\n\n**Goal**: Create a prompt that produces precise, well-formatted results.`
+        ];
+        console.log('   - ⚠️ Using fallback prompts');
+      }
 
-    console.log('   - ⬅️ Sending success response back to extension.');
-    res.status(200).json(promptsArray);
+      console.log('   - ⬅️ Sending prompts back to extension.');
+      return res.status(200).json(promptsArray);
+    } else {
+      // Call AI directly to get response
+      console.log(`   - 🚀 Calling AI API directly for action: ${finalAction}...`);
+      try {
+        const aiResponse = await callAIDirectly(userText, finalAction, context || null, text1 || null, text2 || null);
+        if (aiResponse) {
+          console.log('   - ✅ AI response received');
+          // Return as a single response object
+          return res.status(200).json({ 
+            type: 'ai-response',
+            action: finalAction,
+            response: aiResponse 
+          });
+        } else {
+          // Fallback if AI API not available
+          throw new Error('AI API not configured or unavailable');
+        }
+      } catch (error) {
+        console.error('   - ❌ Error calling AI:', error.message);
+        // Return error response
+        return res.status(500).json({
+          error: 'Failed to get AI response',
+          details: error.message,
+          suggestion: 'Please ensure GEMINI_API_KEY is set in your environment variables'
+        });
+      }
+    }
 
   } catch (error) {
     console.error('   - ❌❌❌ ERROR:', error.message);

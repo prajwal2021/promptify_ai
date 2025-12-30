@@ -34,19 +34,42 @@ async function connectDB() {
     return;
   }
 
+  // If currently connecting, wait a bit and check again
+  if (mongoose.connection.readyState === 2) {
+    console.log('⏳ MongoDB connection in progress, waiting...');
+    // Wait up to 5 seconds for connection to complete
+    for (let i = 0; i < 10; i++) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      if (mongoose.connection.readyState === 1) {
+        console.log('✅ MongoDB connection completed');
+        return;
+      }
+    }
+    console.log('⚠️ Connection still in progress after wait, continuing...');
+    return;
+  }
+
   try {
     console.log('🔄 Attempting to connect to MongoDB...');
     // Hide password in logs for security
     const uriForLog = process.env.MONGODB_URI.replace(/:([^:@]+)@/, ':***@');
     console.log('📍 Connection URI:', uriForLog);
     
+    // Close any existing connection attempts first
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
+    
     await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000, // 10 second timeout
+      serverSelectionTimeoutMS: 8000, // 8 second timeout
+      connectTimeoutMS: 8000,
+      socketTimeoutMS: 8000,
     });
     console.log('✅ Successfully connected to MongoDB.');
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
-    console.error('❌ Error details:', err);
+    console.error('❌ Error name:', err.name);
+    console.error('❌ Error code:', err.code);
     // Don't throw - let the routes handle the connection state
   }
 }

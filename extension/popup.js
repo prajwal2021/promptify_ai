@@ -103,12 +103,13 @@
         body: JSON.stringify({ email, username, password })
       });
 
+      // Read response as text first to avoid stream consumption issues
+      const responseText = await response.text();
       let data;
       try {
-        data = await response.json();
+        data = JSON.parse(responseText);
       } catch (parseError) {
-        const text = await response.text();
-        showError(`Server error: ${response.status} ${response.statusText}. ${text}`);
+        showError(`Server error: ${response.status} ${response.statusText}. ${responseText}`);
         return;
       }
 
@@ -157,12 +158,13 @@
         body: JSON.stringify({ email, password })
       });
 
+      // Read response as text first to avoid stream consumption issues
+      const responseText = await response.text();
       let data;
       try {
-        data = await response.json();
+        data = JSON.parse(responseText);
       } catch (parseError) {
-        const text = await response.text();
-        showError(`Server error: ${response.status} ${response.statusText}. ${text}`);
+        showError(`Server error: ${response.status} ${response.statusText}. ${responseText}`);
         return;
       }
 

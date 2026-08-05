@@ -1,0 +1,239 @@
+/* General Styles */
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: #E0E0E0;
+  background-color: #301934; /* Dark Purple Background */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #301934; /* Dark Purple Background */
+}
+
+#root {
+  width: 400px;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #301934; /* Dark Purple Background */
+  border-radius: 8px;
+}
+
+.header-icons {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+}
+
+.icon-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-icon {
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography */
+h1 {
+  font-size: 20px;
+  line-height: 1.1;
+  text-align: center;
+  color: #E0E0E0;
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+p {
+  font-size: 14px;
+  text-align: center;
+  color: #D8BFD8; /* Thistle for subtitles */
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+a {
+  font-weight: 500;
+  color: #9370DB; /* Medium Purple links */
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #8A2BE2; /* Brighter purple on hover */
+}
+
+/* Form Elements */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1px solid #9370DB;
+  border-radius: 8px;
+  resize: vertical;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  background-color: #483D8B;
+  color: #E0E0E0;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #fff;
+  background-color: #8A2BE2; /* Blue Violet button */
+  cursor: pointer;
+  transition: background-color .2s, border-color .25s;
+}
+
+button:hover {
+  background-color: #9932CC; /* Dark Orchid on hover */
+  border-color: #9370DB;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+button:disabled {
+  background-color: #555;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+/* Response Container */
+.responseContainer {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.responseContainer h2 {
+  font-size: 16px;
+  color: #E0E0E0;
+  margin-top: 0;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.prompt-card {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(147, 112, 219, 0.1) 100%);
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-card:hover {
+  border-color: rgba(138, 43, 226, 0.5);
+  box-shadow: 0 4px 16px rgba(138, 43, 226, 0.2);
+  transform: translateY(-2px);
+}
+
+.prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.prompt-number {
+  min-width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #8A2BE2 0%, #9370DB 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(138, 43, 226, 0.4);
+}
+
+.prompt-text {
+  font-size: 14px;
+  color: #E0E0E0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(138, 43, 226, 0.2);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  text-align: left;
+}
+
+.copy-button {
+  background: linear-gradient(135deg, #8A2BE2 0%, #9370DB 100%);
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 6px rgba(138, 43, 226, 0.3);
+}
+
+.copy-button:hover {
+  background: linear-gradient(135deg, #9932CC 0%, #8A2BE2 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+}
+
+.copy-button:active {
+  transform: translateY(0);
+}
+
+.copy-button.copied {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.copy-button svg {
+  flex-shrink: 0;
+}
+
+.copy-button .copy-text {
+  font-size: 12px;
+  font-weight: 600;
+}

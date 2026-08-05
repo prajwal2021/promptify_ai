@@ -1,0 +1,23 @@
+{
+    "manifest_version": 3,
+    "name": "Promptify AI",
+    "version": "1.0",
+    "description": "Generate prompts for your AI models.",
+    "permissions": [ "storage" ],
+    "host_permissions": [ 
+      "http://localhost:5173/",
+      "http://localhost:8000/*",
+      "https://*.vercel.app/*"
+    ],
+    "background": { "service_worker": "background.js" },
+    "content_scripts": [
+      {
+        "matches": [ "<all_urls>" ],
+        "js": [ "content.js" ],
+        "css": [ "floating-popup.css" ]
+      }
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    }
+  }
